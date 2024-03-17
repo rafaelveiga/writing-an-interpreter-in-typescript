@@ -10,7 +10,16 @@ test("Let Statements", () => {
 
   const program = parser.parseProgram();
 
+  const errors = parser.getErrors();
+
   expect(program).not.toBeNull();
+
+  if (errors.length > 0) {
+    console.log("parser has errors");
+    errors.forEach((err) => console.log(err));
+  }
+
+  expect(errors.length).toBe(0);
 
   if (program !== null) {
     expect(program.statements.length).toBe(3);

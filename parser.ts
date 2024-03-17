@@ -6,9 +6,11 @@ export class Parser {
   l: Lexer;
   curToken: Token | null = null;
   peekToken: Token | null = null;
+  errors: string[] = [];
 
-  constructor(l: Lexer) {
+  constructor(l: Lexer, errors: string[] = []) {
     this.l = l;
+    this.errors = errors;
 
     this.nextToken();
     this.nextToken();
@@ -22,7 +24,7 @@ export class Parser {
   parseProgram(): Program {
     const program = new Program([]);
 
-    while (this.curToken?.type !== TOKENS.EOF) {
+    while (!this.curTokenIs(TOKENS.EOF)) {
       const statement = this.parseStatement();
 
       if (statement) {
@@ -38,25 +40,28 @@ export class Parser {
   parseStatement(): LetStatement | null {
     switch (this.curToken?.type) {
       case TOKENS.LET:
-        console.log("let");
         return this.parseLetStatement();
       default:
         return null;
     }
   }
 
+  /**
+   * 1. We construct a letStatement if the current token matches the LET token in the switch above, which means that
+   * the current token that we are sitting (this.curToken) is a LET token.
+   * 2. We then keep advancing through tokens until we find an IDENT token sitting at the next position (this.peekToken).
+   * `let x` = `<LET_TOKEN> <IDENT_TOKEN>`
+   * 3. If we find a IDENT token in the next position, we construct a Identifier and assign to the `name` key in LetStatement.
+   * 4. We then keep advancing through tokens until we find an ASSIGN token sitting at the next position (this.peekToken).
+   * 5. This means that right after the assign token, comes the Expression that we want to assign to the value of the LetStatement
+   */
   parseLetStatement(): LetStatement | null {
-    // Init a new LetStatement with the current token
     const stmt = new LetStatement(this.curToken as Token);
 
-    // Check if the next token is an identifier
-    // If its not, return null
     if (!this.expectPeek(TOKENS.IDENT)) {
       return null;
     }
 
-    // Set the name of the LetStatement to the current token
-    // which should be an identifier (x, y, foobar, etc.)
     stmt.name = newIdentifier(
       this.curToken as Token,
       this.curToken?.literal as string
@@ -86,19 +91,29 @@ export class Parser {
       this.nextToken();
       return true;
     } else {
+      this.peekError(t);
       return false;
     }
   }
+
+  peekError(t: TOKENS) {
+    const msg = `expected next token to be ${t}, got ${this.peekToken?.type} instead`;
+    this.errors.push(msg);
+  }
+
+  getErrors(): string[] {
+    return this.errors;
+  }
 }
 
-// const l = new Lexer(`
-// let x = 5;
-// let y = 10;
-// let foobar = 838383;
-// `);
+const l = new Lexer(`
+let x = 5;
+let y = 10;
+let foobar = 838383;
+`);
 
-// const p = new Parser(l);
+const p = new Parser(l);
 
-// const program = p.parseProgram();
+const program = p.parseProgram();
 
-// console.log(program.statements);
+console.log(program.statements);
