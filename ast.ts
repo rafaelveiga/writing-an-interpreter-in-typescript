@@ -14,8 +14,8 @@ export interface Expression extends Node {
 
 export type TLetStatement = {
   token: Token;
-  name: Identifier;
-  value: Expression;
+  name?: Identifier;
+  value?: Expression | null;
 };
 
 export type Identifier = {
@@ -43,20 +43,27 @@ export class Program implements TProgram {
   }
 }
 
-export class LetStatement implements TLetStatement, Node {
+export class LetStatement implements TLetStatement, Statement {
   token: Token;
-  name: Identifier;
-  value: Expression;
+  name: Identifier | undefined;
+  value: Expression | undefined;
 
-  constructor(token: Token, name: Identifier, value: Expression) {
+  constructor(token: Token) {
     this.token = token;
-    this.name = name;
-    this.value = value;
   }
 
-  statementNode() {}
+  statementNode() {
+    return this;
+  }
 
   tokenLiteral(): string {
     return this.token.literal;
   }
+}
+
+export default function newIdentifier(token: Token, value: string): Identifier {
+  return {
+    token: token.type as TOKENS.IDENT,
+    value,
+  };
 }
