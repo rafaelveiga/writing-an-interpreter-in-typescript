@@ -1,4 +1,9 @@
-import newIdentifier, { LetStatement, Program, Statement } from "./ast";
+import newIdentifier, {
+  LetStatement,
+  Program,
+  ReturnStatement,
+  Statement,
+} from "./ast";
 import Lexer from "./lexer";
 import { TOKENS, Token } from "./token";
 
@@ -37,10 +42,12 @@ export class Parser {
     return program;
   }
 
-  parseStatement(): LetStatement | null {
+  parseStatement(): LetStatement | ReturnStatement | null {
     switch (this.curToken?.type) {
       case TOKENS.LET:
         return this.parseLetStatement();
+      case TOKENS.RETURN:
+        return this.parseReturnStatement();
       default:
         return null;
     }
@@ -70,6 +77,18 @@ export class Parser {
     if (!this.expectPeek(TOKENS.ASSIGN)) {
       return null;
     }
+
+    while (!this.curTokenIs(TOKENS.SEMICOLON)) {
+      this.nextToken();
+    }
+
+    return stmt;
+  }
+
+  parseReturnStatement(): ReturnStatement | null {
+    const stmt = new ReturnStatement(this.curToken as Token);
+
+    this.nextToken();
 
     while (!this.curTokenIs(TOKENS.SEMICOLON)) {
       this.nextToken();
@@ -110,6 +129,8 @@ const l = new Lexer(`
 let x = 5;
 let y = 10;
 let foobar = 838383;
+return 5;
+return 10;
 `);
 
 const p = new Parser(l);

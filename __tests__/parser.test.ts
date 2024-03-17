@@ -36,3 +36,37 @@ test("Let Statements", () => {
     });
   }
 });
+
+test("Return Statements", () => {
+  const input = `
+  return 5;
+  return 10;
+  return 993322;
+  `;
+
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+
+  const errors = parser.getErrors();
+
+  expect(program).not.toBeNull();
+
+  if (errors.length > 0) {
+    console.log("parser has errors");
+    errors.forEach((err) => console.log(err));
+  }
+
+  expect(errors.length).toBe(0);
+
+  if (program !== null) {
+    expect(program.statements.length).toBe(3);
+  }
+
+  if (program !== null) {
+    program.statements.forEach((stmt: Statement) => {
+      expect(stmt.tokenLiteral()).toBe("return");
+    });
+  }
+});
