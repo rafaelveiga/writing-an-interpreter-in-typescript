@@ -1,5 +1,8 @@
 import { TOKENS, Token } from "./token";
 
+// ==================================================================
+// Types
+// ==================================================================
 export type Node = {
   tokenLiteral(): string;
 };
@@ -18,6 +21,11 @@ export type TLetStatement = {
   value?: Expression | null;
 };
 
+export type TReturnStatement = {
+  token: Token;
+  returnValue?: Expression | null;
+};
+
 export type Identifier = {
   token: TOKENS.IDENT;
   value: string;
@@ -27,6 +35,9 @@ type TProgram = {
   statements: Statement[];
 };
 
+// ==================================================================
+// Creators
+// ==================================================================
 export class Program implements TProgram {
   statements: Statement[] = [];
 
@@ -47,6 +58,23 @@ export class LetStatement implements TLetStatement, Statement {
   token: Token;
   name: Identifier | undefined;
   value: Expression | undefined;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  statementNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+}
+
+export class ReturnStatement implements TReturnStatement, Statement {
+  token: Token;
+  returnValue: Expression | undefined;
 
   constructor(token: Token) {
     this.token = token;
