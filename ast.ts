@@ -147,26 +147,3 @@ export function newIdentifier(token: Token, value: string): Identifier {
     },
   };
 }
-
-export function newStatement(
-  token: Token,
-  name: Identifier,
-  value: Expression
-): LetStatement {
-  return {
-    token,
-    name,
-    value,
-    statementNode() {
-      return this;
-    },
-    tokenLiteral() {
-      return this.token.literal;
-    },
-    string() {
-      return `${this.tokenLiteral()} ${
-        this.name?.value
-      } = ${this.value?.string()};`;
-    },
-  };
-}
