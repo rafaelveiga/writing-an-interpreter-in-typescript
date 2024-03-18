@@ -4,6 +4,7 @@ import {
   Identifier,
   IntegerLiteral,
   LetStatement,
+  PrefixExpression,
   Program,
   ReturnStatement,
 } from "./ast";
@@ -39,6 +40,8 @@ export class Parser {
 
     this.registerPrefix(TOKENS.IDENT, this.parseIdentifier.bind(this));
     this.registerPrefix(TOKENS.INT, this.parseIntegerLiteral.bind(this));
+    this.registerPrefix(TOKENS.BANG, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(TOKENS.MINUS, this.parsePrefixExpression.bind(this));
   }
 
   nextToken() {
@@ -103,7 +106,9 @@ export class Parser {
     }
 
     while (!this.curTokenIs(TOKENS.SEMICOLON)) {
-      stmt.value = this.parseExpression(PRECEDENCE.LOWEST);
+      if (!this.curTokenIs(TOKENS.ASSIGN)) {
+        stmt.value = this.parseExpression(PRECEDENCE.LOWEST);
+      }
       this.nextToken();
     }
 
@@ -141,6 +146,7 @@ export class Parser {
     const prefix = this.prefixParseFns[this.curToken?.type];
 
     if (!prefix) {
+      this.noPrefixParseFnError(this.curToken.type);
       return undefined;
     }
 
@@ -171,6 +177,19 @@ export class Parser {
     return lit;
   }
 
+  parsePrefixExpression(): Expression | undefined {
+    const expression = new PrefixExpression(
+      this.curToken as Token,
+      this.curToken?.literal as string
+    );
+
+    this.nextToken();
+
+    expression.right = this.parseExpression(PRECEDENCE.PREFIX);
+
+    return expression;
+  }
+
   // ==========================================
   // ============ HELPER METHODS =============
   // ==========================================
@@ -197,6 +216,11 @@ export class Parser {
     this.errors.push(msg);
   }
 
+  noPrefixParseFnError(t: TOKENS) {
+    const msg = `no prefix parse function for ${t} found`;
+    this.errors.push(msg);
+  }
+
   getErrors(): string[] {
     return this.errors;
   }
@@ -210,16 +234,17 @@ export class Parser {
   }
 }
 
-const l = new Lexer(`
-let foobar = 5;
-foobar;
-return foobar;
-5;
-`);
+// const l = new Lexer(`
+// let foobar = 5;
+// foobar;
+// return foobar;
+// 5;
+// !5
+// `);
 
-const p = new Parser(l);
+// const p = new Parser(l);
 
-const program = p.parseProgram();
-console.log(program.string());
+// const program = p.parseProgram();
+// console.log(program.string());
 
-console.log(program.statements);
+// console.log(program.statements);

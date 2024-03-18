@@ -46,7 +46,7 @@ export type TIntegerLiteral = {
 export type TPrefixExpression = {
   token: Token; // The prefix token, e.g. TOKENS.BANG or TOKENS.MINUS
   operator: string;
-  right: Expression;
+  right?: Expression;
 } & Node;
 
 // Program
@@ -202,12 +202,11 @@ export class Identifier implements TIdentifier {
 export class PrefixExpression implements TPrefixExpression {
   token: Token;
   operator: string;
-  right: Expression;
+  right?: Expression;
 
-  constructor(token: Token, operator: string, right: Expression) {
+  constructor(token: Token, operator: string, right?: Expression) {
     this.token = token;
     this.operator = operator;
-    this.right = right;
   }
 
   expressionNode() {
@@ -219,6 +218,6 @@ export class PrefixExpression implements TPrefixExpression {
   }
 
   string(): string {
-    return `(${this.operator}${this.right.string()})`;
+    return `(${this.operator}${this.right?.string()})`;
   }
 }

@@ -90,6 +90,20 @@ test("Integer Literal Expression", () => {
   }
 });
 
+test("Parsing Prefix Expressions", () => {
+  const lexer = new Lexer("!5;");
+  const parser = new Parser(lexer);
+  const program = parser.parseProgram();
+
+  checkParserErrors(parser);
+
+  expect(program).not.toBeNull();
+
+  if (program !== null) {
+    expect(program.statements.length).toBe(1);
+  }
+});
+
 function checkParserErrors(parser: Parser) {
   const errors = parser.getErrors();
 
