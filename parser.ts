@@ -1,12 +1,33 @@
-import { LetStatement, Program, ReturnStatement, newIdentifier } from "./ast";
+import {
+  Expression,
+  ExpressionStatement,
+  LetStatement,
+  Program,
+  ReturnStatement,
+  newIdentifier,
+} from "./ast";
 import Lexer from "./lexer";
 import { TOKENS, Token } from "./token";
 
+enum PRECEDENCE {
+  LOWEST = 0,
+  EQUALS = 1, // ==
+  LESSGREATER = 2, // > or <
+  SUM = 3, // +
+  PRODUCT = 4, // *
+  PREFIX = 5, // -X or !X
+  CALL = 6, // myFunction(X)
+}
+
 export class Parser {
   l: Lexer;
+  errors: string[] = [];
+
   curToken: Token | null = null;
   peekToken: Token | null = null;
-  errors: string[] = [];
+
+  prefixParseFns: { [key: string]: Function } = {};
+  infixParseFns: { [key: string]: Function } = {};
 
   constructor(l: Lexer, errors: string[] = []) {
     this.l = l;
@@ -14,6 +35,8 @@ export class Parser {
 
     this.nextToken();
     this.nextToken();
+
+    this.registerPrefix(TOKENS.IDENT, this.parseIdentifier.bind(this));
   }
 
   nextToken() {
@@ -37,14 +60,18 @@ export class Parser {
     return program;
   }
 
-  parseStatement(): LetStatement | ReturnStatement | null {
+  parseStatement():
+    | LetStatement
+    | ReturnStatement
+    | ExpressionStatement
+    | null {
     switch (this.curToken?.type) {
       case TOKENS.LET:
         return this.parseLetStatement();
       case TOKENS.RETURN:
         return this.parseReturnStatement();
       default:
-        return null;
+        return this.parseExpressionStatement();
     }
   }
 
@@ -92,6 +119,40 @@ export class Parser {
     return stmt;
   }
 
+  parseExpressionStatement() {
+    const stmt = new ExpressionStatement(this.curToken as Token);
+
+    stmt.expression = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (this.peekTokenIs(TOKENS.SEMICOLON)) {
+      this.nextToken();
+    }
+
+    return stmt;
+  }
+
+  parseExpression(precedence: number): any {
+    if (!this.curToken) return;
+
+    const prefix = this.prefixParseFns[this.curToken?.type];
+
+    if (!prefix) {
+      return null;
+    }
+
+    let leftExp = prefix();
+
+    return leftExp;
+  }
+
+  // TODO: Fix return, add return type
+  parseIdentifier() {
+    return newIdentifier(
+      this.curToken as Token,
+      this.curToken?.literal as string
+    );
+  }
+
   curTokenIs(t: TOKENS): boolean {
     return this.curToken?.type === t;
   }
@@ -118,14 +179,18 @@ export class Parser {
   getErrors(): string[] {
     return this.errors;
   }
+
+  registerPrefix(tokenType: TOKENS, fn: Function) {
+    this.prefixParseFns[tokenType] = fn;
+  }
+
+  registerInfix(tokenType: TOKENS, fn: Function) {
+    this.infixParseFns[tokenType] = fn;
+  }
 }
 
 // const l = new Lexer(`
-// let x = 5;
-// let y = 10;
-// let foobar = 838383;
-// return 5;
-// return 10;
+// foobar;
 // `);
 
 // const p = new Parser(l);
@@ -133,4 +198,4 @@ export class Parser {
 // const program = p.parseProgram();
 // console.log(program.string());
 
-// console.log(program);
+// console.log(program.statements);

@@ -29,7 +29,7 @@ export type TReturnStatement = {
 
 export type TExpressionStatement = {
   token: Token;
-  expression: Expression;
+  expression?: Expression | undefined;
 };
 
 export type Identifier = {
@@ -118,11 +118,10 @@ export class ReturnStatement implements TReturnStatement, Statement {
 
 export class ExpressionStatement implements TExpressionStatement, Statement {
   token: Token;
-  expression: Expression;
+  expression?: Expression;
 
-  constructor(token: Token, expression: Expression) {
+  constructor(token: Token) {
     this.token = token;
-    this.expression = expression;
   }
 
   statementNode() {
@@ -134,7 +133,7 @@ export class ExpressionStatement implements TExpressionStatement, Statement {
   }
 
   string(): string {
-    return this.expression.string();
+    return this.expression?.string() || "TODO";
   }
 }
 
