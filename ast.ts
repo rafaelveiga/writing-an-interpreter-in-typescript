@@ -5,6 +5,7 @@ import { TOKENS, Token } from "./token";
 // ==================================================================
 export type Node = {
   tokenLiteral(): string;
+  string(): string;
 };
 
 export interface Statement extends Node {
@@ -18,7 +19,7 @@ export interface Expression extends Node {
 export type TLetStatement = {
   token: Token;
   name?: Identifier;
-  value?: Expression | null;
+  value?: Expression | Identifier | null;
 };
 
 export type TReturnStatement = {
@@ -26,9 +27,15 @@ export type TReturnStatement = {
   returnValue?: Expression | null;
 };
 
+export type TExpressionStatement = {
+  token: Token;
+  expression: Expression;
+};
+
 export type Identifier = {
   token: TOKENS.IDENT;
   value: string;
+  string(): string;
 };
 
 type TProgram = {
@@ -52,15 +59,25 @@ export class Program implements TProgram {
       return "";
     }
   }
+
+  string(): string {
+    return this.statements.map((s) => s.string()).join("");
+  }
 }
 
 export class LetStatement implements TLetStatement, Statement {
   token: Token;
   name: Identifier | undefined;
-  value: Expression | undefined;
+  value: Identifier | Expression | undefined;
 
-  constructor(token: Token) {
+  constructor(
+    token: Token,
+    name?: Identifier,
+    value?: Identifier | Expression
+  ) {
     this.token = token;
+    if (name) this.name = name;
+    if (value) this.value = value;
   }
 
   statementNode() {
@@ -69,6 +86,12 @@ export class LetStatement implements TLetStatement, Statement {
 
   tokenLiteral(): string {
     return this.token.literal;
+  }
+
+  string(): string {
+    return `${this.tokenLiteral()} ${
+      this.name?.value
+    } = ${this.value?.string()};`;
   }
 }
 
@@ -87,11 +110,63 @@ export class ReturnStatement implements TReturnStatement, Statement {
   tokenLiteral(): string {
     return this.token.literal;
   }
+
+  string(): string {
+    return `${this.tokenLiteral()} ${this.returnValue?.string()};`;
+  }
 }
 
-export default function newIdentifier(token: Token, value: string): Identifier {
+export class ExpressionStatement implements TExpressionStatement, Statement {
+  token: Token;
+  expression: Expression;
+
+  constructor(token: Token, expression: Expression) {
+    this.token = token;
+    this.expression = expression;
+  }
+
+  statementNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return this.expression.string();
+  }
+}
+
+export function newIdentifier(token: Token, value: string): Identifier {
   return {
     token: token.type as TOKENS.IDENT,
     value,
+    string() {
+      return this.value;
+    },
+  };
+}
+
+export function newStatement(
+  token: Token,
+  name: Identifier,
+  value: Expression
+): LetStatement {
+  return {
+    token,
+    name,
+    value,
+    statementNode() {
+      return this;
+    },
+    tokenLiteral() {
+      return this.token.literal;
+    },
+    string() {
+      return `${this.tokenLiteral()} ${
+        this.name?.value
+      } = ${this.value?.string()};`;
+    },
   };
 }

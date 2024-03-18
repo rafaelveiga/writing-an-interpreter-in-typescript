@@ -1,9 +1,4 @@
-import newIdentifier, {
-  LetStatement,
-  Program,
-  ReturnStatement,
-  Statement,
-} from "./ast";
+import { LetStatement, Program, ReturnStatement, newIdentifier } from "./ast";
 import Lexer from "./lexer";
 import { TOKENS, Token } from "./token";
 
@@ -125,16 +120,17 @@ export class Parser {
   }
 }
 
-const l = new Lexer(`
-let x = 5;
-let y = 10;
-let foobar = 838383;
-return 5;
-return 10;
-`);
+// const l = new Lexer(`
+// let x = 5;
+// let y = 10;
+// let foobar = 838383;
+// return 5;
+// return 10;
+// `);
 
-const p = new Parser(l);
+// const p = new Parser(l);
 
-const program = p.parseProgram();
+// const program = p.parseProgram();
+// console.log(program.string());
 
-console.log(program.statements);
+// console.log(program);
