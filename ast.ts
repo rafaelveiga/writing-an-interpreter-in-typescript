@@ -3,43 +3,59 @@ import { Token } from "./token";
 // ==================================================================
 // Types
 // ==================================================================
+// Shared properties of all nodes of our AST tree
+export type Node = {
+  tokenLiteral(): string;
+  string(): string;
+  expressionNode?(): Expression;
+  statementNode?(): Statement;
+};
+
 export type Statement = LetStatement | ReturnStatement | ExpressionStatement;
 
-export type Expression = IntegerLiteral | Identifier;
+export type Expression = IntegerLiteral | Identifier | PrefixExpression;
 
+// Statements
 export type TLetStatement = {
   token: Token;
   name?: TIdentifier;
   value?: Expression;
-};
+} & Node;
 
 export type TReturnStatement = {
   token: Token;
   value?: Expression;
-};
+} & Node;
 
 export type TExpressionStatement = {
   token: Token;
   value?: Expression;
-};
+} & Node;
 
+// Expressions
 export type TIdentifier = {
-  token: Token;
+  token: Token; // The TOKENS.IDENT token
   value: string;
-  string(): string;
-};
+} & Node;
 
 export type TIntegerLiteral = {
-  token: Token;
+  token: Token; // The TOKENS.INT token
   value: number;
-};
+} & Node;
 
+export type TPrefixExpression = {
+  token: Token; // The prefix token, e.g. TOKENS.BANG or TOKENS.MINUS
+  operator: string;
+  right: Expression;
+} & Node;
+
+// Program
 type TProgram = {
   statements: Statement[];
-};
+} & Node;
 
 // ==================================================================
-// Creators
+// Program
 // ==================================================================
 export class Program implements TProgram {
   statements: Statement[] = [];
@@ -61,6 +77,9 @@ export class Program implements TProgram {
   }
 }
 
+// ==================================================================
+// Statements
+// ==================================================================
 export class LetStatement implements TLetStatement {
   token: Token;
   name: Identifier | undefined;
@@ -133,6 +152,9 @@ export class ExpressionStatement implements TExpressionStatement {
   }
 }
 
+// ==================================================================
+// Expressions
+// ==================================================================
 export class IntegerLiteral implements TIntegerLiteral {
   token: Token;
   value: number;
@@ -164,7 +186,39 @@ export class Identifier implements TIdentifier {
     this.value = value;
   }
 
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
   string(): string {
     return this.value;
+  }
+}
+
+export class PrefixExpression implements TPrefixExpression {
+  token: Token;
+  operator: string;
+  right: Expression;
+
+  constructor(token: Token, operator: string, right: Expression) {
+    this.token = token;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `(${this.operator}${this.right.string()})`;
   }
 }
