@@ -1,41 +1,37 @@
-import { TOKENS, Token } from "./token";
+import { Token } from "./token";
 
 // ==================================================================
 // Types
 // ==================================================================
-export type Node = {
-  tokenLiteral(): string;
-  string(): string;
-};
+export type Statement = LetStatement | ReturnStatement | ExpressionStatement;
 
-export interface Statement extends Node {
-  statementNode(): Node;
-}
-
-export interface Expression extends Node {
-  expressionNode(): Node;
-}
+export type Expression = IntegerLiteral | Identifier;
 
 export type TLetStatement = {
   token: Token;
-  name?: Identifier;
-  value?: Expression | Identifier | null;
+  name?: TIdentifier;
+  value?: Expression;
 };
 
 export type TReturnStatement = {
   token: Token;
-  returnValue?: Expression | null;
+  value?: Expression;
 };
 
 export type TExpressionStatement = {
   token: Token;
-  expression?: Expression | undefined;
+  value?: Expression;
 };
 
-export type Identifier = {
-  token: TOKENS.IDENT;
+export type TIdentifier = {
+  token: Token;
   value: string;
   string(): string;
+};
+
+export type TIntegerLiteral = {
+  token: Token;
+  value: number;
 };
 
 type TProgram = {
@@ -65,7 +61,7 @@ export class Program implements TProgram {
   }
 }
 
-export class LetStatement implements TLetStatement, Statement {
+export class LetStatement implements TLetStatement {
   token: Token;
   name: Identifier | undefined;
   value: Identifier | Expression | undefined;
@@ -95,9 +91,9 @@ export class LetStatement implements TLetStatement, Statement {
   }
 }
 
-export class ReturnStatement implements TReturnStatement, Statement {
+export class ReturnStatement implements TReturnStatement {
   token: Token;
-  returnValue: Expression | undefined;
+  value: Expression | undefined;
 
   constructor(token: Token) {
     this.token = token;
@@ -112,13 +108,13 @@ export class ReturnStatement implements TReturnStatement, Statement {
   }
 
   string(): string {
-    return `${this.tokenLiteral()} ${this.returnValue?.string()};`;
+    return `${this.tokenLiteral()} ${this.value?.string()};`;
   }
 }
 
-export class ExpressionStatement implements TExpressionStatement, Statement {
+export class ExpressionStatement implements TExpressionStatement {
   token: Token;
-  expression?: Expression;
+  value?: Expression;
 
   constructor(token: Token) {
     this.token = token;
@@ -133,16 +129,42 @@ export class ExpressionStatement implements TExpressionStatement, Statement {
   }
 
   string(): string {
-    return this.expression?.string() || "TODO";
+    return this.value?.string() || "undefined";
   }
 }
 
-export function newIdentifier(token: Token, value: string): Identifier {
-  return {
-    token: token.type as TOKENS.IDENT,
-    value,
-    string() {
-      return this.value;
-    },
-  };
+export class IntegerLiteral implements TIntegerLiteral {
+  token: Token;
+  value: number;
+
+  constructor(token: Token, value: number) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return this.token.literal;
+  }
+}
+
+export class Identifier implements TIdentifier {
+  token: Token;
+  value: string;
+
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
+
+  string(): string {
+    return this.value;
+  }
 }

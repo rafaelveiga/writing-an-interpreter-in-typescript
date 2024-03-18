@@ -1,4 +1,4 @@
-import { ExpressionStatement, LetStatement, Statement } from "../ast";
+import { Identifier, IntegerLiteral, LetStatement, Statement } from "../ast";
 import Lexer from "../lexer";
 import { Parser } from "../parser";
 
@@ -67,6 +67,26 @@ test("Identifier Expression", () => {
 
   if (program !== null) {
     expect(program.statements.length).toBe(1);
+
+    expect(program.statements[0].value).toBeInstanceOf(Identifier);
+  }
+});
+
+test("Integer Literal Expression", () => {
+  const input = "5;";
+
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+  const program = parser.parseProgram();
+
+  checkParserErrors(parser);
+
+  expect(program).not.toBeNull();
+
+  if (program !== null) {
+    expect(program.statements.length).toBe(1);
+
+    expect(program.statements[0].value).toBeInstanceOf(IntegerLiteral);
   }
 });
 

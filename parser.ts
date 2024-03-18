@@ -1,10 +1,10 @@
 import {
-  Expression,
   ExpressionStatement,
+  Identifier,
+  IntegerLiteral,
   LetStatement,
   Program,
   ReturnStatement,
-  newIdentifier,
 } from "./ast";
 import Lexer from "./lexer";
 import { TOKENS, Token } from "./token";
@@ -37,6 +37,7 @@ export class Parser {
     this.nextToken();
 
     this.registerPrefix(TOKENS.IDENT, this.parseIdentifier.bind(this));
+    this.registerPrefix(TOKENS.INT, this.parseIntegerLiteral.bind(this));
   }
 
   nextToken() {
@@ -91,7 +92,7 @@ export class Parser {
       return null;
     }
 
-    stmt.name = newIdentifier(
+    stmt.name = new Identifier(
       this.curToken as Token,
       this.curToken?.literal as string
     );
@@ -101,6 +102,7 @@ export class Parser {
     }
 
     while (!this.curTokenIs(TOKENS.SEMICOLON)) {
+      stmt.value = this.parseExpression(PRECEDENCE.LOWEST);
       this.nextToken();
     }
 
@@ -113,6 +115,7 @@ export class Parser {
     this.nextToken();
 
     while (!this.curTokenIs(TOKENS.SEMICOLON)) {
+      stmt.value = this.parseExpression(PRECEDENCE.LOWEST);
       this.nextToken();
     }
 
@@ -122,7 +125,7 @@ export class Parser {
   parseExpressionStatement() {
     const stmt = new ExpressionStatement(this.curToken as Token);
 
-    stmt.expression = this.parseExpression(PRECEDENCE.LOWEST);
+    stmt.value = this.parseExpression(PRECEDENCE.LOWEST);
 
     if (this.peekTokenIs(TOKENS.SEMICOLON)) {
       this.nextToken();
@@ -145,14 +148,31 @@ export class Parser {
     return leftExp;
   }
 
-  // TODO: Fix return, add return type
-  parseIdentifier() {
-    return newIdentifier(
+  parseIdentifier(): Identifier {
+    return new Identifier(
       this.curToken as Token,
       this.curToken?.literal as string
     );
   }
 
+  parseIntegerLiteral(): IntegerLiteral | null {
+    const lit = new IntegerLiteral(this.curToken as Token, 0);
+
+    const value = parseInt(this.curToken?.literal as string);
+
+    if (isNaN(value)) {
+      this.errors.push(`could not parse ${this.curToken?.literal} as integer`);
+      return null;
+    }
+
+    lit.value = value;
+
+    return lit;
+  }
+
+  // ==========================================
+  // ============ HELPER METHODS =============
+  // ==========================================
   curTokenIs(t: TOKENS): boolean {
     return this.curToken?.type === t;
   }
@@ -189,13 +209,16 @@ export class Parser {
   }
 }
 
-// const l = new Lexer(`
-// foobar;
-// `);
+const l = new Lexer(`
+let foobar = 5;
+foobar;
+return foobar;
+5;
+`);
 
-// const p = new Parser(l);
+const p = new Parser(l);
 
-// const program = p.parseProgram();
-// console.log(program.string());
+const program = p.parseProgram();
+console.log(program.string());
 
-// console.log(program.statements);
+console.log(program.statements);
