@@ -1,4 +1,5 @@
 import {
+  Expression,
   ExpressionStatement,
   Identifier,
   IntegerLiteral,
@@ -134,13 +135,13 @@ export class Parser {
     return stmt;
   }
 
-  parseExpression(precedence: number): any {
-    if (!this.curToken) return;
+  parseExpression(precedence: number): Expression | undefined {
+    if (!this.curToken) return undefined;
 
     const prefix = this.prefixParseFns[this.curToken?.type];
 
     if (!prefix) {
-      return null;
+      return undefined;
     }
 
     let leftExp = prefix();
