@@ -13,7 +13,11 @@ export type Node = {
 
 export type Statement = LetStatement | ReturnStatement | ExpressionStatement;
 
-export type Expression = IntegerLiteral | Identifier | PrefixExpression;
+export type Expression =
+  | IntegerLiteral
+  | Identifier
+  | PrefixExpression
+  | InfixExpression;
 
 // Statements
 export type TLetStatement = {
@@ -46,6 +50,13 @@ export type TIntegerLiteral = {
 export type TPrefixExpression = {
   token: Token; // The prefix token, e.g. TOKENS.BANG or TOKENS.MINUS
   operator: string;
+  right?: Expression;
+} & Node;
+
+export type TInfixExpression = {
+  token: Token; // The infix token, e.g. TOKENS.PLUS, TOKENS.MINUS, etc.
+  left?: Expression;
+  operator?: string;
   right?: Expression;
 } & Node;
 
@@ -219,5 +230,36 @@ export class PrefixExpression implements TPrefixExpression {
 
   string(): string {
     return `(${this.operator}${this.right?.string()})`;
+  }
+}
+
+export class InfixExpression implements TInfixExpression {
+  token: Token;
+  left?: Expression;
+  operator?: string;
+  right?: Expression;
+
+  constructor(
+    token: Token,
+    left?: Expression,
+    operator?: string,
+    right?: Expression
+  ) {
+    this.token = token;
+    this.left = left;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `(${this.left?.string()} ${this.operator} ${this.right?.string()})`;
   }
 }

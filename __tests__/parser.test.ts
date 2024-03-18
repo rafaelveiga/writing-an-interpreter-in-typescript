@@ -1,4 +1,12 @@
-import { Identifier, IntegerLiteral, LetStatement, Statement } from "../ast";
+import {
+  ExpressionStatement,
+  Identifier,
+  InfixExpression,
+  IntegerLiteral,
+  LetStatement,
+  PrefixExpression,
+  Statement,
+} from "../ast";
 import Lexer from "../lexer";
 import { Parser } from "../parser";
 
@@ -101,7 +109,50 @@ test("Parsing Prefix Expressions", () => {
 
   if (program !== null) {
     expect(program.statements.length).toBe(1);
+
+    const stmt = program.statements[0];
+
+    expect(stmt).not.toBeNull();
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
   }
+});
+
+test("Parsing Infix Expressions", () => {
+  const testCases = [
+    // Input, leftValue, operator, rightValue
+    ["5 + 5;", 5, "+", 5],
+    ["5 - 5;", 5, "-", 5],
+    ["5 * 5;", 5, "*", 5],
+    ["5 / 5;", 5, "/", 5],
+    ["5 > 5;", 5, ">", 5],
+    ["5 < 5;", 5, "<", 5],
+    ["5 == 5;", 5, "==", 5],
+    ["5 != 5;", 5, "!=", 5],
+  ];
+
+  testCases.forEach((input) => {
+    const lexer = new Lexer(input[0] as string);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    checkParserErrors(parser);
+
+    expect(program).not.toBeNull();
+
+    if (program !== null) {
+      expect(program.statements.length).toBe(1);
+
+      const stmt = program.statements[0];
+
+      expect(stmt).not.toBeNull();
+      expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+      const expression = stmt.value;
+
+      expect(expression).not.toBeNull();
+      expect(expression).toBeInstanceOf(InfixExpression);
+    }
+  });
 });
 
 function checkParserErrors(parser: Parser) {
