@@ -60,6 +60,11 @@ export type TInfixExpression = {
   right?: Expression;
 } & Node;
 
+export type TBoolean = {
+  token: Token;
+  value: boolean;
+} & Node;
+
 // Program
 type TProgram = {
   statements: Statement[];
@@ -261,5 +266,27 @@ export class InfixExpression implements TInfixExpression {
 
   string(): string {
     return `(${this.left?.string()} ${this.operator} ${this.right?.string()})`;
+  }
+}
+
+export class BooleanExpression implements TBoolean {
+  token: Token;
+  value: boolean;
+
+  constructor(token: Token, value: boolean) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return this.token.literal;
   }
 }

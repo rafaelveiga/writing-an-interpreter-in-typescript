@@ -1,4 +1,5 @@
 import {
+  BooleanExpression,
   Expression,
   ExpressionStatement,
   Identifier,
@@ -54,6 +55,8 @@ export class Parser {
     this.registerPrefix(TOKENS.INT, this.parseIntegerLiteral.bind(this));
     this.registerPrefix(TOKENS.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(TOKENS.MINUS, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(TOKENS.TRUE, this.parseBoolean.bind(this));
+    this.registerPrefix(TOKENS.FALSE, this.parseBoolean.bind(this));
 
     this.registerInfix(TOKENS.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(TOKENS.MINUS, this.parseInfixExpression.bind(this));
@@ -242,6 +245,13 @@ export class Parser {
     return expression;
   }
 
+  parseBoolean(): Expression {
+    return new BooleanExpression(
+      this.curToken as Token,
+      this.curTokenIs(TOKENS.TRUE)
+    );
+  }
+
   // ==========================================
   // ============ HELPER METHODS =============
   // ==========================================
@@ -297,8 +307,7 @@ export class Parser {
 }
 
 const l = new Lexer(`
-5 * 5;
-5 + 5;
+3 > 5 == false;
 `);
 
 const p = new Parser(l);

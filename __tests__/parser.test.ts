@@ -155,6 +155,65 @@ test("Parsing Infix Expressions", () => {
   });
 });
 
+test("Operator Precedence Parsing", () => {
+  const testCases = [
+    ["-a * b", "((-a) * b)"],
+    ["!-a", "(!(-a))"],
+    ["a + b + c", "((a + b) + c)"],
+    ["a + b - c", "((a + b) - c)"],
+    ["a * b * c", "((a * b) * c)"],
+    ["a * b / c", "((a * b) / c)"],
+    ["a + b / c", "(a + (b / c))"],
+    ["a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"],
+    ["3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"],
+    ["5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"],
+    ["5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"],
+    ["3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"],
+  ];
+
+  testCases.forEach((input) => {
+    const lexer = new Lexer(input[0] as string);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    checkParserErrors(parser);
+
+    expect(program).not.toBeNull();
+
+    if (program !== null) {
+      expect(program.string()).toBe(input[1]);
+    }
+  });
+});
+
+test("Boolean Expression", () => {
+  const input = "true; false;";
+
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+  const program = parser.parseProgram();
+
+  checkParserErrors(parser);
+
+  expect(program).not.toBeNull();
+
+  const testCases = ["true", "false"];
+
+  if (program !== null) {
+    expect(program.statements.length).toBe(2);
+
+    testCases.forEach((testCase, index) => {
+      const stmt = program.statements[index];
+      expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+      const expression = stmt.value;
+
+      expect(expression).not.toBeNull();
+      expect(expression?.tokenLiteral()).toBe(testCase);
+    });
+  }
+});
+
 function checkParserErrors(parser: Parser) {
   const errors = parser.getErrors();
 
