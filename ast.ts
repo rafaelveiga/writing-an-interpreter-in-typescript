@@ -36,6 +36,11 @@ export type TExpressionStatement = {
   value?: Expression;
 } & Node;
 
+export type TBlockStatement = {
+  token: Token;
+  statements: Statement[];
+} & Node;
+
 // Expressions
 export type TIdentifier = {
   token: Token; // The TOKENS.IDENT token
@@ -60,9 +65,16 @@ export type TInfixExpression = {
   right?: Expression;
 } & Node;
 
-export type TBoolean = {
+export type TBooleanExpression = {
   token: Token;
   value: boolean;
+} & Node;
+
+export type TIfExpression = {
+  token: Token;
+  condition?: Expression;
+  consequence?: TBlockStatement;
+  alternative?: TBlockStatement;
 } & Node;
 
 // Program
@@ -168,6 +180,28 @@ export class ExpressionStatement implements TExpressionStatement {
   }
 }
 
+export class BlockStatement implements TBlockStatement {
+  token: Token;
+  statements: Statement[];
+
+  constructor(token: Token, statements: Statement[]) {
+    this.token = token;
+    this.statements = statements;
+  }
+
+  statementNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return this.statements.map((s) => s.string()).join("");
+  }
+}
+
 // ==================================================================
 // Expressions
 // ==================================================================
@@ -211,7 +245,7 @@ export class Identifier implements TIdentifier {
   }
 
   string(): string {
-    return this.value;
+    return this.token.literal;
   }
 }
 
@@ -269,7 +303,7 @@ export class InfixExpression implements TInfixExpression {
   }
 }
 
-export class BooleanExpression implements TBoolean {
+export class BooleanExpression implements TBooleanExpression {
   token: Token;
   value: boolean;
 
@@ -288,5 +322,38 @@ export class BooleanExpression implements TBoolean {
 
   string(): string {
     return this.token.literal;
+  }
+}
+
+export class IfExpression implements TIfExpression {
+  token: Token;
+  condition?: Expression;
+  consequence?: TBlockStatement;
+  alternative?: TBlockStatement;
+
+  constructor(
+    token: Token,
+    condition?: Expression,
+    consequence?: TBlockStatement,
+    alternative?: TBlockStatement
+  ) {
+    this.token = token;
+    this.condition = condition;
+    this.consequence = consequence;
+    this.alternative = alternative;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `if ${this.condition?.string()} ${this.consequence?.string()} ${
+      this.alternative ? `else ${this.alternative.string()}` : ""
+    }`;
   }
 }

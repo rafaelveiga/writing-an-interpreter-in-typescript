@@ -12,6 +12,7 @@ import {
 } from "./ast";
 import Lexer from "./lexer";
 import { TOKENS, Token } from "./token";
+import util from "util";
 
 enum PRECEDENCE {
   LOWEST = 0,
@@ -57,6 +58,7 @@ export class Parser {
     this.registerPrefix(TOKENS.MINUS, this.parsePrefixExpression.bind(this));
     this.registerPrefix(TOKENS.TRUE, this.parseBoolean.bind(this));
     this.registerPrefix(TOKENS.FALSE, this.parseBoolean.bind(this));
+    this.registerPrefix(TOKENS.LPAREN, this.parseGroupedExpression.bind(this));
 
     this.registerInfix(TOKENS.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(TOKENS.MINUS, this.parseInfixExpression.bind(this));
@@ -252,6 +254,18 @@ export class Parser {
     );
   }
 
+  parseGroupedExpression(): Expression | undefined {
+    this.nextToken();
+
+    const exp = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (!this.expectPeek(TOKENS.RPAREN)) {
+      return undefined;
+    }
+
+    return exp;
+  }
+
   // ==========================================
   // ============ HELPER METHODS =============
   // ==========================================
@@ -315,4 +329,10 @@ const p = new Parser(l);
 const program = p.parseProgram();
 console.log(program.string());
 
-console.log(program.statements);
+console.log(
+  util.inspect(program.statements, {
+    showHidden: false,
+    depth: null,
+    colors: true,
+  })
+);
