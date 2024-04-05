@@ -1,8 +1,10 @@
 import {
+  BlockStatement,
   BooleanExpression,
   Expression,
   ExpressionStatement,
   Identifier,
+  IfExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -59,6 +61,7 @@ export class Parser {
     this.registerPrefix(TOKENS.TRUE, this.parseBoolean.bind(this));
     this.registerPrefix(TOKENS.FALSE, this.parseBoolean.bind(this));
     this.registerPrefix(TOKENS.LPAREN, this.parseGroupedExpression.bind(this));
+    this.registerPrefix(TOKENS.IF, this.parseIfExpression.bind(this));
 
     this.registerInfix(TOKENS.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(TOKENS.MINUS, this.parseInfixExpression.bind(this));
@@ -266,6 +269,56 @@ export class Parser {
     return exp;
   }
 
+  parseIfExpression(): Expression | undefined {
+    const expression = new IfExpression(this.curToken as Token);
+
+    if (!this.expectPeek(TOKENS.LPAREN)) {
+      return undefined;
+    }
+
+    this.nextToken();
+
+    expression.condition = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (!this.expectPeek(TOKENS.RPAREN)) {
+      return undefined;
+    }
+
+    if (!this.expectPeek(TOKENS.LBRACE)) {
+      return undefined;
+    }
+
+    expression.consequence = this.parseBlockStatement();
+
+    if (this.peekTokenIs(TOKENS.ELSE)) {
+      this.nextToken();
+
+      if (!this.expectPeek(TOKENS.LBRACE)) {
+        return undefined;
+      }
+
+      expression.alternative = this.parseBlockStatement();
+    }
+
+    return expression;
+  }
+
+  parseBlockStatement(): BlockStatement {
+    const block = new BlockStatement(this.curToken as Token, []);
+
+    this.nextToken();
+
+    while (!this.curTokenIs(TOKENS.RBRACE) && !this.curTokenIs(TOKENS.EOF)) {
+      const stmt = this.parseStatement();
+      if (stmt) {
+        block.statements.push(stmt);
+      }
+      this.nextToken();
+    }
+
+    return block;
+  }
+
   // ==========================================
   // ============ HELPER METHODS =============
   // ==========================================
@@ -321,7 +374,17 @@ export class Parser {
 }
 
 const l = new Lexer(`
-3 > 5 == false;
+if (3 > 5 == false) {
+  return 3;
+  if (true) {
+    return 5;
+  }
+} else {
+  return 4;
+  if (false) {
+    return 6;
+  }
+};
 `);
 
 const p = new Parser(l);
