@@ -3,6 +3,7 @@ import {
   BooleanExpression,
   Expression,
   ExpressionStatement,
+  FunctionLiteral,
   Identifier,
   IfExpression,
   InfixExpression,
@@ -62,6 +63,7 @@ export class Parser {
     this.registerPrefix(TOKENS.FALSE, this.parseBoolean.bind(this));
     this.registerPrefix(TOKENS.LPAREN, this.parseGroupedExpression.bind(this));
     this.registerPrefix(TOKENS.IF, this.parseIfExpression.bind(this));
+    this.registerPrefix(TOKENS.FUNCTION, this.parseFunctionLiteral.bind(this));
 
     this.registerInfix(TOKENS.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(TOKENS.MINUS, this.parseInfixExpression.bind(this));
@@ -181,7 +183,6 @@ export class Parser {
 
     let leftExp = prefix();
 
-    // wtf?
     while (
       !this.peekTokenIs(TOKENS.SEMICOLON) &&
       precedence < this.peekPrecedence()
@@ -319,6 +320,60 @@ export class Parser {
     return block;
   }
 
+  parseFunctionLiteral(): FunctionLiteral | undefined {
+    const fn = new FunctionLiteral(this.curToken as Token);
+
+    if (!this.expectPeek(TOKENS.LPAREN)) {
+      return undefined;
+    }
+
+    fn.parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(TOKENS.LBRACE)) {
+      return undefined;
+    }
+
+    fn.body = this.parseBlockStatement();
+
+    return fn;
+  }
+
+  parseFunctionParameters(): Identifier[] {
+    const identifiers: Identifier[] = [];
+
+    if (this.peekTokenIs(TOKENS.RPAREN)) {
+      this.nextToken();
+      return identifiers;
+    }
+
+    this.nextToken();
+
+    const ident = new Identifier(
+      this.curToken as Token,
+      this.curToken?.literal as string
+    );
+
+    identifiers.push(ident);
+
+    while (this.peekTokenIs(TOKENS.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+
+      const ident = new Identifier(
+        this.curToken as Token,
+        this.curToken?.literal as string
+      );
+
+      identifiers.push(ident);
+    }
+
+    if (!this.expectPeek(TOKENS.RPAREN)) {
+      return [];
+    }
+
+    return identifiers;
+  }
+
   // ==========================================
   // ============ HELPER METHODS =============
   // ==========================================
@@ -385,12 +440,15 @@ if (3 > 5 == false) {
     return 6;
   }
 };
+
+let a = fn(x, y) {
+  return x + y;
+};
 `);
 
 const p = new Parser(l);
 
 const program = p.parseProgram();
-console.log(program.string());
 
 console.log(
   util.inspect(program.statements, {

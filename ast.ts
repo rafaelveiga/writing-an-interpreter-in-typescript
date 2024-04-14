@@ -52,6 +52,12 @@ export type TIntegerLiteral = {
   value: number;
 } & Node;
 
+export type TFunctionLiteral = {
+  token: Token;
+  parameters?: TIdentifier[];
+  body?: TBlockStatement;
+} & Node;
+
 export type TPrefixExpression = {
   token: Token; // The prefix token, e.g. TOKENS.BANG or TOKENS.MINUS
   operator: string;
@@ -355,5 +361,35 @@ export class IfExpression implements TIfExpression {
     return `if ${this.condition?.string()} ${this.consequence?.string()} ${
       this.alternative ? `else ${this.alternative.string()}` : ""
     }`;
+  }
+}
+
+export class FunctionLiteral implements TFunctionLiteral {
+  token: Token;
+  parameters?: TIdentifier[];
+  body?: TBlockStatement;
+
+  constructor(
+    token: Token,
+    parameters?: TIdentifier[],
+    body?: TBlockStatement
+  ) {
+    this.token = token;
+    this.parameters = parameters;
+    this.body = body;
+  }
+
+  expressionNode() {
+    return this;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `${this.token.literal}(${
+      this.parameters ? this.parameters.map((p) => p.string()).join(", ") : ""
+    }) ${this.body?.string()}`;
   }
 }
